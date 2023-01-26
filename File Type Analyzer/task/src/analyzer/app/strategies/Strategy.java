@@ -1,25 +1,23 @@
-package analyzer.app;
+package analyzer.app.strategies;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
-class FileType {
+public abstract class Strategy {
     private final String filename;
-    private final Pattern pattern;
+    Pattern pattern;
     private final String fileType;
+    String content;
 
-    protected FileType(String filename, String pattern, String fileType) {
+    public Strategy(String filename, String pattern, String fileType) {
         this.filename = filename;
         this.pattern = Pattern.compile(pattern);
         this.fileType = fileType;
+        this.content = readFile() == null ? "" : readFile();
     }
 
-    private boolean matches() {
-        String fileContent = readFile();
-        return Objects.nonNull(fileContent) && this.pattern.matcher(fileContent).find();
-    }
+    abstract boolean matches();
 
     private String readFile() {
         File file = new File(this.filename);
@@ -32,7 +30,7 @@ class FileType {
         }
     }
 
-    protected String getFileType() {
+    public String getFileType() {
         return matches() ? this.fileType : "Unknown file type";
     }
 }
