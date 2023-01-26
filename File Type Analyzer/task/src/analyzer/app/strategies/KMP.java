@@ -1,11 +1,10 @@
 package analyzer.app.strategies;
 
-public class KMP extends Strategy {
-    String patternString;
+import java.io.File;
 
-    public KMP(String filename, String pattern, String fileType) {
-        super(filename, pattern, fileType);
-        this.patternString = pattern;
+public class KMP extends Strategy {
+    public KMP(File file, String pattern, String fileType) {
+        super(file, pattern, fileType);
     }
 
     @Override
@@ -14,20 +13,20 @@ public class KMP extends Strategy {
     }
 
     private boolean KMPSearch() {
-        int patternLength = this.pattern.pattern().length();
+        int patternLength = this.pattern.length();
         int contentLength = this.content.length();
         int[] lps = prefixFunction();
 
         int j = 0;
         int i = 0;
         do {
-            if (patternString.charAt(j) == content.charAt(i)) {
+            if (pattern.charAt(j) == content.charAt(i)) {
                 j++;
                 i++;
             }
             if (j == patternLength) {
                 return true;
-            } else if (i < contentLength && patternString.charAt(j) != content.charAt(i)) {
+            } else if (i < contentLength && pattern.charAt(j) != content.charAt(i)) {
                 if (j != 0) {
                     j = lps[j - 1];
                 } else {
@@ -39,14 +38,14 @@ public class KMP extends Strategy {
     }
 
     private int[] prefixFunction() {
-        int[] pi = new int[patternString.length()];
+        int[] pi = new int[pattern.length()];
         pi[0] = 0;
         int k = 0;
-        for (int i = 1; i < patternString.length(); i++) {
-            while (k > 0 && patternString.charAt(k) != patternString.charAt(i)) {
+        for (int i = 1; i < pattern.length(); i++) {
+            while (k > 0 && pattern.charAt(k) != pattern.charAt(i)) {
                 k = pi[k - 1];
             }
-            if (patternString.charAt(k) == patternString.charAt(i)) {
+            if (pattern.charAt(k) == pattern.charAt(i)) {
                 k++;
             }
             pi[i] = k;

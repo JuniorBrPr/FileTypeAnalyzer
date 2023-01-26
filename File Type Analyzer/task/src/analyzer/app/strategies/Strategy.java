@@ -2,17 +2,17 @@ package analyzer.app.strategies;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.regex.Pattern;
+import java.util.concurrent.Callable;
 
-public abstract class Strategy {
-    private final String filename;
-    Pattern pattern;
+public abstract class Strategy implements Callable<String> {
+    private final File file;
+    final String pattern;
     private final String fileType;
     String content;
 
-    public Strategy(String filename, String pattern, String fileType) {
-        this.filename = filename;
-        this.pattern = Pattern.compile(pattern);
+    public Strategy(File file, String pattern, String fileType) {
+        this.file = file;
+        this.pattern = pattern;
         this.fileType = fileType;
         this.content = readFile() == null ? "" : readFile();
     }
@@ -20,7 +20,6 @@ public abstract class Strategy {
     abstract boolean matches();
 
     private String readFile() {
-        File file = new File(this.filename);
         try {
             return new String(Files.readAllBytes(file.toPath()));
         } catch (Exception e) {
@@ -30,7 +29,12 @@ public abstract class Strategy {
         }
     }
 
-    public String getFileType() {
-        return matches() ? this.fileType : "Unknown file type";
+    private String getFileType() {
+        return this.file.getName() + ": " + (matches() ? this.fileType : "Unknown file type");
+    }
+
+    @Override
+    public String call() {
+        return getFileType();
     }
 }
