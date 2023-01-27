@@ -1,18 +1,21 @@
 package analyzer.app.strategies;
 
+import analyzer.app.FileType;
+
 import java.io.File;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 
 public abstract class Strategy implements Callable<String> {
     private final File file;
-    private final HashMap<Integer, String[]> patterns;
-    private String fileType;
+    private final ArrayList<FileType> patterns;
     String content;
+    private String fileType;
 
-    public Strategy(File file, HashMap<Integer, String[]> patterns) {
+    public Strategy(File file, ArrayList<FileType> patterns) {
         this.file = file;
         this.patterns = patterns;
         this.fileType = null;
@@ -21,17 +24,20 @@ public abstract class Strategy implements Callable<String> {
 
     abstract boolean matches(String pattern);
 
+    @Override
+    public String call() {
+        matchPatterns();
+        return getFileType();
+    }
+
     private void matchPatterns() {
-        int i = 0;
-        for (Map.Entry<Integer, String[]> entry : patterns.entrySet()) {
-            Integer key = entry.getKey();
-            String[] value = entry.getValue();
-            System.out.println("Searching for " + value[0] + " in " + this.file.getName());
-            if (matches(value[0]) && key > i) {
-                i = key;
-                this.fileType = value[1];
+        AtomicInteger i = new AtomicInteger(0);
+        patterns.forEach((pattern) -> {
+            if (pattern.priority() > i.get() && matches(pattern.pattern())) {
+                i.set(pattern.priority());
+                this.fileType = pattern.name();
             }
-        }
+        });
     }
 
     private String readFile() {
@@ -46,11 +52,5 @@ public abstract class Strategy implements Callable<String> {
 
     private String getFileType() {
         return this.file.getName() + ": " + (this.fileType != null ? this.fileType : "Unknown file type");
-    }
-
-    @Override
-    public String call() {
-        matchPatterns();
-        return getFileType();
     }
 }

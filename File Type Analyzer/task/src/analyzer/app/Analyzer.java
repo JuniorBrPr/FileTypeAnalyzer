@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -16,20 +15,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class Analyzer {
-    private final String[] args;
     private final File file;
-    private final HashMap<Integer, String[]> patterns;
+    private final ArrayList<FileType> fileTypes;
     private final ExecutorService executor;
 
     public Analyzer(String[] args) {
-        this.args = args;
         this.file = new File(args[0]);
-        this.patterns = getPatterns(new File(args[1]));
+        this.fileTypes = getPatterns(new File(args[1]));
         this.executor = Executors.newFixedThreadPool(10);
     }
 
-    private HashMap<Integer, String[]> getPatterns(File file) {
-        HashMap<Integer, String[]> patterns = new HashMap<>();
+    private ArrayList<FileType> getPatterns(File file) {
+        ArrayList<FileType> fileTypes = new ArrayList<>();
         List<String> lines;
         try {
             lines = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
@@ -38,17 +35,16 @@ public class Analyzer {
         }
         for (String line : lines) {
             String[] split = line.split(";");
-            patterns.put(Integer.parseInt(split[0]), new String[]{split[1].replace("\"", " ").trim(),
-                    split[2].replace("\"", " ").trim()});
-            System.out.println(split[0] + " " + split[1] + " " + split[2]);
+            FileType p = new FileType(Integer.parseInt(split[0]), split[1].replace("\"", " ").trim(),
+                    split[2].replace("\"", " ").trim());
+            fileTypes.add(p);
         }
-        return patterns;
+        return fileTypes;
     }
 
     public void analyze() {
         ArrayList<Strategy> filesToAnalyze = getAllFilesToAnalyze(this.file);
-        System.out.println("Files to analyze: " + filesToAnalyze.size());
-        if (!filesToAnalyze.isEmpty()){
+        if (!filesToAnalyze.isEmpty()) {
             List<Future<String>> futures;
             ArrayList<String> results = new ArrayList<>();
             try {
@@ -87,7 +83,6 @@ public class Analyzer {
     }
 
     private Strategy initializeStrategy(File file) {
-        // TODO: remove this
-        return new KMP(file, patterns);
+        return new KMP(file, fileTypes);
     }
 }
