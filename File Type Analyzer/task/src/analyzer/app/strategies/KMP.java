@@ -1,21 +1,24 @@
 package analyzer.app.strategies;
 
+import analyzer.app.FileType;
+
 import java.io.File;
+import java.util.ArrayList;
 
 public class KMP extends Strategy {
-    public KMP(File file, String pattern, String fileType) {
-        super(file, pattern, fileType);
+    public KMP(File file, ArrayList<FileType> patterns) {
+        super(file, patterns);
     }
 
     @Override
-    boolean matches() {
-        return KMPSearch();
+    boolean matches(String pattern) {
+        return KMPSearch(pattern);
     }
 
-    private boolean KMPSearch() {
-        int patternLength = this.pattern.length();
+    private boolean KMPSearch(String pattern) {
+        int patternLength = pattern.length();
         int contentLength = this.content.length();
-        int[] lps = prefixFunction();
+        int[] lps = prefixFunction(pattern);
 
         int j = 0;
         int i = 0;
@@ -37,7 +40,7 @@ public class KMP extends Strategy {
         return false;
     }
 
-    private int[] prefixFunction() {
+    private int[] prefixFunction(String pattern) {
         int[] pi = new int[pattern.length()];
         pi[0] = 0;
         int k = 0;

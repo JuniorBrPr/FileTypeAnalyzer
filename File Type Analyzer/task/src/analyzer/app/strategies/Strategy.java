@@ -1,23 +1,44 @@
 package analyzer.app.strategies;
 
+import analyzer.app.FileType;
+
 import java.io.File;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 
 public abstract class Strategy implements Callable<String> {
     private final File file;
-    final String pattern;
-    private final String fileType;
+    private final ArrayList<FileType> patterns;
     String content;
+    private String fileType;
 
-    public Strategy(File file, String pattern, String fileType) {
+    public Strategy(File file, ArrayList<FileType> patterns) {
         this.file = file;
-        this.pattern = pattern;
-        this.fileType = fileType;
+        this.patterns = patterns;
+        this.fileType = null;
         this.content = readFile() == null ? "" : readFile();
     }
 
-    abstract boolean matches();
+    abstract boolean matches(String pattern);
+
+    @Override
+    public String call() {
+        matchPatterns();
+        return getFileType();
+    }
+
+    private void matchPatterns() {
+        AtomicInteger i = new AtomicInteger(0);
+        patterns.forEach((pattern) -> {
+            if (pattern.priority() > i.get() && matches(pattern.pattern())) {
+                i.set(pattern.priority());
+                this.fileType = pattern.name();
+            }
+        });
+    }
 
     private String readFile() {
         try {
@@ -30,11 +51,6 @@ public abstract class Strategy implements Callable<String> {
     }
 
     private String getFileType() {
-        return this.file.getName() + ": " + (matches() ? this.fileType : "Unknown file type");
-    }
-
-    @Override
-    public String call() {
-        return getFileType();
+        return this.file.getName() + ": " + (this.fileType != null ? this.fileType : "Unknown file type");
     }
 }
